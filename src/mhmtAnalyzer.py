@@ -6,14 +6,14 @@ Analysis module for magnetometry data
     Berthold Rimmler, 
     Max Planck Institute of Microstructure Physics, Halle
     Weinberg 2
-    06120 Halle
+    06120 Halle, Germany
     berthold.rimmler@mpi-halle.mpg.de
 """
 
 # ____________________________________________________________________________
 # Data
-selectUI = True        # Select input folder from UI
-IPFolder = r'D:\owncloud\0_Personal\ANALYSIS\Mn3SnN\SQUID\00Code\Magnetometry-Analysis-App\demonstration_data\squid' # Ignore if selectUI == True
+selectUI = False        # Select input folder from UI
+IPFolder = r'D:\owncloud\0_Personal\DATA\Mn3SnN\SQUID\MA3407\220329\split' # Ignore if selectUI == True
 
 
 # ____________________________________________________________________________
@@ -46,8 +46,8 @@ MeasModeLS = 0          # 0 = at RT
 AutoParamSearch = True  # automatic recognition of constant parameter
 moment_units = [0]      # 0 = raw, 1 = emu/cm3, 2 = muB/f.u.
 
-HFQuadrants = [0,1,2,3] # quadrants used for substrate subtraction
-HFLimit = 5000         # High-field limit for substrate subtraction
+HFQuadrants = [0,3] # quadrants used for substrate subtraction
+HFLimit = 2000         # High-field limit for substrate subtraction
 HFLimitMode = 'abs'     # Mode of high field limit: absolute ("abs") values or
                         # relative to maximum value ("rel")
 
@@ -62,7 +62,7 @@ plt_error_bar = True
 FigBaseSizeMH = (6,5)   # Better not to change
 FigBaseSizeMT = (5,3)   # Same
 
-MHInsetLimit = 4000     # Oe
+MHInsetLimit = 2000     # Oe
 FigBaseDPI = 300
 
 # ____________________________________________________________________________

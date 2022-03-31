@@ -2,14 +2,14 @@ import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from  .mhHelpers import *
+from  .mhHelpers import Input, Sample, FileAnalysis, report_progress
 import tkinter as tk
 from tkinter import filedialog
 from .plots import GenPlot
 from .hysteresis import GenHyst
 from  .mhSystemSettings import squidSystemSettings, vsmSystemSettings
-from .mhUnitConversion import *
-from .outputs import *
+from .mhUnitConversion import conv_fact_emu_to_emucc, conv_fact_emu_to_muB_per_fu, conv_emu_to_emucc, conv_emu_to_muB_per_fu
+from .outputs import PlotOutput, GenPlotOutput, DataFrameOutput
 
 def main(selectUI, IPFolder, SampleID, IPSampleParamDBFileFolder, IPSampleParamDBFileFile,
         system, MeasModeOrient, MeasModeScanMPMS, MeasModeLS, AutoParamSearch, moment_units,
@@ -62,9 +62,8 @@ def main(selectUI, IPFolder, SampleID, IPSampleParamDBFileFolder, IPSampleParamD
     for file in IP.AllAnaFiles:
         AllFileAnalysis.append(FileAnalysis(file, sample))
 
-    extracted_params_summ = {}
+    extracted_params_summ = pd.DataFrame()
     for file_nb, FileAna in enumerate(AllFileAnalysis):
-        opData = pd.DataFrame()
         report_progress(file_nb, AllFileAnalysis)
         
         # _________________________________________________________________________
@@ -137,7 +136,7 @@ def main(selectUI, IPFolder, SampleID, IPSampleParamDBFileFolder, IPSampleParamD
         # _________________________________________________________________________
         # Analsis of M vs. H loops
         elif FileAna.file.MeasType == 'MH': 
-            extracted_params = {}
+            extracted_params = pd.Series()
             
             H = FileAna.file.H
             M = FileAna.file.M
@@ -221,16 +220,16 @@ def main(selectUI, IPFolder, SampleID, IPSampleParamDBFileFolder, IPSampleParamD
                         char = getattr(hyst_lin_sub, char_key)
                         if char_key == 'saturation':
                             label = '$M_s$='+'{:.2e} {}'.format(char.avg_abs_point[1], yunit)
-                            if i == 1:
-                                extracted_params[f'M_s ({m_unit})'] = char.avg_abs_point[1]
+                            # if i == 1:
+                                # extracted_params[f'M_s ({m_unit})'] = char.avg_abs_point[1]
                         elif char_key == 'coercivity':
                             label = '$H_c$='+'{:.2e} {}'.format(char.avg_abs_point[0], xunit)
-                            if i == 1:
-                                extracted_params[f'H_c ({xunit})'] = char.avg_abs_point[0]
+                            # if i == 1:
+                            #     extracted_params[f'H_c ({xunit})'] = char.avg_abs_point[0]
                         if char_key == 'remanence':
                             label = '$M_r$='+'{:.2e} {}'.format(char.avg_abs_point[1], yunit)
-                            if i == 1:
-                                extracted_params[f'M_r ({m_unit})'] = char.avg_abs_point[1]
+                            # if i == 1:
+                            #     extracted_params[f'M_r ({m_unit})'] = char.avg_abs_point[1]
                             
                         for p, point in enumerate(char.points):
                             x, y = point
@@ -240,14 +239,13 @@ def main(selectUI, IPFolder, SampleID, IPSampleParamDBFileFolder, IPSampleParamD
                                 ax[i].scatter(x, y, color=color[c])
 
 
-
                                 
                     if show_H_offset is True:
                         x, y = getattr(hyst_lin_sub, 'coercivity').cntr_point
                         label = '$H_{off}$='+'{:.2e} {}'.format(x, xunit)
                         ax[i].scatter(x, y, label=label, color='m')
-                        if i == 1:
-                            extracted_params[f'M_off ({m_unit})'] = x
+                        # if i == 1:
+                        #     extracted_params[f'M_off ({m_unit})'] = x
                 
                 ax[1].legend()
                 ax[2].set_xlim(-MHInsetLimit, MHInsetLimit)
@@ -279,6 +277,22 @@ def main(selectUI, IPFolder, SampleID, IPSampleParamDBFileFolder, IPSampleParamD
                 pltName = FileAna.file.fileNameWOExt + f'_plt_{m_unit_verb}{PlotExt}'
                 outputs.append(PlotOutput(fig, OPFolder, pltName, 
                                             saveDataFrame=mhOutputData))
+                
+                
+                
+                extracted_params['T (K)'] = FileAna.file.FixedT
+                extracted_params[f'Hc ({xunit})'] = hyst_lin_sub.coercivity.avg_abs_point[0]
+                extracted_params[f'Hoff ({xunit})'] = hyst_lin_sub.coercivity.cntr_point[0]
+                extracted_params[f'Ms ({new_unit})'] = hyst_lin_sub.saturation.avg_abs_point[1]
+                extracted_params[f'Mr ({new_unit})'] = hyst_lin_sub.remanence.avg_abs_point[1]
+                extracted_params = pd.Series(extracted_params)
+                # print(extracted_params)
+                # print(extracted_params_summ)
+            extracted_params_summ = pd.concat([extracted_params_summ, extracted_params.to_frame().T])
+                
+        outputs.append(DataFrameOutput(extracted_params_summ, OPFolder, 'mh_extr_params.csv'))
+                
+                
 
 
 
