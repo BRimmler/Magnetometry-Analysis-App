@@ -81,7 +81,7 @@ def conv_emu_to_muB_per_fu(mu_in_emu, SampleDim, rho, W):
     SampleDim : array
         Sampel dimensions as array with units (mm, mm, mm2, nm).
     rho : float
-        Film material density in g/cm3,.
+        Film material density in g/cm3.
     W : float
         Film material molar mass in g/mol.
 

@@ -70,12 +70,14 @@ def main(selectUI, IPFolder, SampleID, IPSampleParamDBFileFolder, IPSampleParamD
         # Analsis of M vs. T curves 
         if FileAna.file.MeasType == 'MT': 
             
-            T = FileAna.file.T
-            H = FileAna.file.H
-            M = FileAna.file.M
-            M_err = FileAna.file.dM
             
             for m_unit in moment_units:
+                
+                T = FileAna.file.T
+                H = FileAna.file.H
+                M = FileAna.file.M
+                M_err = FileAna.file.dM
+
                 if m_unit == 0:
                     ylabel = '$m$ (emu)'
                     savelabel = 'emu'
