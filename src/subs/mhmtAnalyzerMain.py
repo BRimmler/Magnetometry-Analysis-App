@@ -14,7 +14,7 @@ from .outputs import PlotOutput, GenPlotOutput, DataFrameOutput
 def main(selectUI, IPFolder, SampleID, IPSampleParamDBFileFolder, IPSampleParamDBFileFile,
         system, MeasModeOrient, MeasModeScanMPMS, MeasModeLS, AutoParamSearch, moment_units,
         HFQuadrants, HFLimit, HFLimitMode, plot_type, show_H_offset, show_interp, interp_density,
-        xaxis_in_Tesla, plt_error_bar, FigBaseSizeMH, FigBaseSizeMT, MHInsetLimit, FigBaseDPI, 
+        xaxis_in_Tesla, plt_error_bar, FigBaseSizeMH, FigBaseSizeMT, MHInsetLimitOe, FigBaseDPI, 
         fileSystem, OPFolder, SaveOutput, PlotExt, AnalysisModeMT, tempFileDirName):
 
     # Prepare output
@@ -157,10 +157,11 @@ def main(selectUI, IPFolder, SampleID, IPSampleParamDBFileFolder, IPSampleParamD
             
             if xaxis_in_Tesla is True:
                 hyst_init = hyst_init.scale_axis('x', 1e-4, old_unit='Oe', new_unit='T')
-                MHInsetLimit *= 1e-4 # to T
+                MHInsetLimit = MHInsetLimitOe * 1e-4 # to T
                 xunit = 'T'
             else:
                 xunit = 'Oe'
+                MHInsetLimit = MHInsetLimitOe
                 
             hyst_lin_sub_init, hyst_substr_init = hyst_init.subtract_lin(HFQuadrants)
             hyst_lin_sub_init.get_full_loop_chars()
@@ -263,6 +264,9 @@ def main(selectUI, IPFolder, SampleID, IPSampleParamDBFileFolder, IPSampleParamD
                                                             FileAna.file.FixedT,
                                                             MeasModeOrient)
                 fig.suptitle(PlotTitle)
+                ax[0].set_title('Full data')
+                ax[1].set_title('Linear part subtracted')
+                ax[2].set_title('Low field region')
                 
                 # Data for output
                 mhOutputData = pd.DataFrame()

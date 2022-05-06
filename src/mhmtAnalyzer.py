@@ -12,13 +12,13 @@ Analysis module for magnetometry data
 
 # ____________________________________________________________________________
 # Data
-selectUI = True        # Select input folder from UI
-IPFolder = r'D:\owncloud\0_Personal\DATA\Mn3SnN\SQUID\MA3407\220329\split' # Ignore if selectUI == True
+selectUI = False        # Select input folder from UI
+IPFolder = r'D:\owncloud\0_Personal\DATA\NIZAF\NIZAF0004\220504' # Ignore if selectUI == True
 
 
 # ____________________________________________________________________________
 # Sample
-SampleID = 'MA2936-3'
+SampleID = 'NIZAF0004'
 
 IPSampleParamDBFileFolder = r'D:\owncloud\0_Personal\ANALYSIS\Mn3SnN\SQUID'
 IPSampleParamDBFileFile = 'squid_samples_sampleparameters.csv'
@@ -54,20 +54,20 @@ HFLimitMode = 'abs'     # Mode of high field limit: absolute ("abs") values or
 # ____________________________________________________________________________
 # Plotting
 plot_type = 'errorbar'  # 'errorbar' or 'scatter'
-show_H_offset = True    # Shows offset field based on coercive fields (exchange bias)
+show_H_offset = False    # Shows offset field based on coercive fields (exchange bias)
 show_interp = False
 interp_density = 5     # Nb. of interp. points = length(data) * interp_density
-xaxis_in_Tesla = False   # Defines whether field should be displayed in Tesla or Oerstedt
+xaxis_in_Tesla = True   # Defines whether field should be displayed in Tesla or Oerstedt
 plt_error_bar = True    
 FigBaseSizeMH = (6,5)   # Better not to change
 FigBaseSizeMT = (5,3)   # Same
 
-MHInsetLimit = 10000     # Oe
+MHInsetLimit = 2000     # Oe
 FigBaseDPI = 300
 
 # ____________________________________________________________________________
 # Saving analysis
-fileSystem = ''     # Set '' if unsure
+fileSystem = 'Berthold'     # Set '' if unsure
 OPFolder = r'D:\owncloud\0_Personal\ANALYSIS\Mn3SnN\SQUID\00Code\Magnetometry-Analysis-code\demonstration_data\vsm'
 
 SaveOutput = True
