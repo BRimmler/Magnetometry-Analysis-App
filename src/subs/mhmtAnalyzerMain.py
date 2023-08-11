@@ -117,10 +117,11 @@ def main(selectUI, IPFolder, SampleID, IPSampleParamDBFileFolder, IPSampleParamD
                     MTScanType['H_avg (Oe)'] = H_avg
                     MTScanType['field'] = 'F'
                     MTScanType['labelAddition'] = ', H = {} Oe'.format(H_avg)
-                    if AnalysisModeMT == 1:
-                        MTScanType['bgMode'] = ', bg subtracted'
-                    else:
-                        MTScanType['bgMode'] = ''
+                    
+                if AnalysisModeMT == 1:
+                    MTScanType['bgMode'] = ', bg subtracted'
+                else:
+                    MTScanType['bgMode'] = ''
         
                 MTScanType['descr'] = MTScanType['field']+MTScanType['direction']+MTScanType['labelAddition']+MTScanType['bgMode']
                 

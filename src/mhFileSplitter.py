@@ -9,10 +9,10 @@ Module to split file into MH curves at different temperatures
     berthold.rimmler@mpi-halle.mpg.de
 """
 
-selectUI = False    # To open UI to select file to split. Alterantively, give path
-path = r'D:\owncloud\0_Personal\DATA\Mn3SnN\SQUID\MA3407\220329\002_MA3407-2_220328_Qrod_IP_VSM_Hstable_EBloop_T_5-400K_fast.dat'
+selectUI = True    # To open UI to select file to split. Alterantively, give path
+path = r'D:\owncloud\0_Personal\DATA\Mn3SnN\SQUID\MA3796-3\221205\000_MA3796-3_221205_Qrod_IP_01_400-5K.dat'
 
-system = 0          # 0: MPMS3 SQUID-VSM
+system = 0          # 0: MPMS3 SQUID-VSM1
 write_info = True
 zfill_nb = 3        # Default: 3
 decimals = 0        # Default: 0

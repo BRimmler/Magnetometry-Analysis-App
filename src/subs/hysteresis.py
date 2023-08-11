@@ -21,7 +21,7 @@ import copy as c
 class GenHyst:
     # _________________________________________________________________________
     # Init
-    def __init__(self, x, y, xerr=None, yerr=None, name=None, history=None):
+    def __init__(self, x, y, xerr=None, yerr=None, name=None, looptype=None, history=None):
         '''
         Parameters
         ----------
@@ -35,8 +35,14 @@ class GenHyst:
             x error values as pandas Series.. The default is None.
         name : str, optional
             Name of the hysteresis. By default, will be constructed.
+        looptype : None or str, optional
+            Type of loop. Allowed:
+                (1) None: Will search for loop type automatically. Only works for 
+                        loops with 2 or 4 quadrants
+                (2) 'full_initial': 4 quadrant loop with initial ("virgin") curve
         history : History, optional
             History instance of the hysteresis. The default is None.
+        
 
         Returns
         -------
@@ -92,6 +98,7 @@ class GenHyst:
            
         self._get_lims()
         self._get_looptype()
+        self._prep_data()
         self.plots = [] # List compiling all plots
         
     # _________________________________________________________________________
@@ -107,36 +114,97 @@ class GenHyst:
         pos_high, neg_high = _get_lim(self.data[self.ylabel])
         self.ylims = {'+y': pos_high, '-y': neg_high}
 
-    def _is_halfloop(self):
-        X = self.data[self.xlabel].to_numpy()
-        increasing = []
-        for i, x in enumerate(X):
-            if i > 0:
-                if x > X[i-1]:
-                    increasing.append(True)
-                else:
-                    increasing.append(False)
-        increasing = np.array(increasing)
-        if np.all(increasing==True):
-            out = (True, 'increasing')
-        elif np.all(increasing==False):
-            out = (True, 'decreasing')
-        else:
-            out = (False, 'non-uniform')
-        return out
+    # def _is_halfloop(self):
+    #     X = self.data[self.xlabel].to_numpy()
+    #     increasing = []
+    #     for i, x in enumerate(X):
+    #         if i > 0:
+    #             if x > X[i-1]:
+    #                 increasing.append(True)
+    #             else:
+    #                 increasing.append(False)
+    #     increasing = np.array(increasing)
+    #     if np.all(increasing==True):
+    #         out = (True, 'increasing')
+    #     elif np.all(increasing==False):
+    #         out = (True, 'decreasing')
+    #     else:
+    #         out = (False, 'non-uniform')
+    #     return out
     
     def _get_looptype(self):
-        looptype = None
-        is_halfloop, direction = self._is_halfloop()
-        if is_halfloop:
-            looptype = f'half_{direction}'
+        X = self.data[self.xlabel].to_numpy()
+        sign = []
+        for i, x in enumerate(X):
+            if i > 0:
+                if x == X[i-1]:
+                    sign.append(0)
+                elif x > X[i-1]:
+                    sign.append(1)
+                elif x < X[i-1]:
+                    sign.append(-1)
+                    
+                    
+        sign = np.array(sign)
+        swaps = []
+        for j, s in enumerate(sign):
+            if j > 0:
+                if not s == sign[j-1]:
+                    swaps.append(j)
+        nb_swaps = len(swaps)
+        if nb_swaps == 0: # Must be half loop
+            nb_quadrants = 2
+        elif nb_swaps == 1: # Full loop
+            nb_quadrants = 4
+        elif nb_swaps == 2: # Full loops with initial curve
+            nb_quadrants = 5
+        elif nb_swaps == 3: # Full loops with 6 quadrants
+            nb_quadrants = 6
+            
+        if np.all(sign==1):
+            looptype = 'half_increasing'
+        elif np.all(sign==-1):
+            looptype = 'half_decreasing'
         else:
-            looptype = 'full'
+            if nb_quadrants == 4:
+                looptype = 'full'
+            elif nb_quadrants == 5:
+                looptype = 'full_initial'
+            elif nb_quadrants == 6:
+                looptype = 'full_6qs'
+        
+        self.nb_quadrants = nb_quadrants        
         self.looptype = looptype
+            
+        
+    # def _get_looptype(self, looptype):
+    #     if looptype is None:
+    #         self._get_nb_quadrants()
+    #         is_halfloop, direction = self._is_halfloop()
+    #         if is_halfloop:
+    #             looptype = f'half_{direction}'
+    #         else:
+                
+    #             looptype = 'full'
+    #     else:
+    #         if looptype not in ['full_initial']:
+    #             raise ValueError(f'{looptype} is not a valid looptype.')
+    #     self.looptype = looptype
         
                 
+    def _prep_data(self):
+        if self.looptype == 'full_initial':
+            X = self.data[self.xlabel].to_numpy()
+            for i, x in enumerate(X):
+                if i > 0 and x < X[i-1]: # Initial curve finished
+                    break
+                    
+            self.initial_curve_stop_index = i
+            self.data_init_curve = self.data.iloc[:i-1]
+            self.data = self.data.iloc[i-1:]
+            
     def split_half(self, find_half=True, ignore_edge_data=True, n_ignore=5):
-        if not self.looptype == 'full':
+        if not self.looptype in ['full', 'full_initial']:
             raise ValueError('Not a valid method if looptype is not "full"')
             
         if find_half is False:
@@ -163,53 +231,64 @@ class GenHyst:
         
         
         
-    def split_quarter(self, find_quarter=True, ignore_edge_data=True, n_ignore=5):
-        if self.looptype == 'full':
-            if find_quarter is False:
-                quarter_length = len(self.data[self.xlabel]) // 4
-                split_indices = [quarter_length, 2*quarter_length, 3*quarter_length]
-                
-            else:
-                X = self.data[self.xlabel].to_numpy()
-                start_enum_index, stop_enum_index = get_enum_indices(X, ignore_edge_data, n_ignore)
+    def split_quadrants(self, ignore_edge_data=True, n_ignore=5):
+        # if find_quarter is False:
+        #     quarter_length = len(self.data[self.xlabel]) // 4
+        #     split_indices = [quarter_length, 2*quarter_length, 3*quarter_length]
+            
+        X = self.data[self.xlabel].to_numpy()
+        start_enum_index, stop_enum_index = get_enum_indices(X, ignore_edge_data, n_ignore)
+            
+        split_indices = []
+        for i, x in enumerate(X):
+            if i > start_enum_index and i < stop_enum_index:
+                conditions = [
+                    np.sign(X[i]) != np.sign(X[i-1]), # Going through zero
+                    np.sign(X[i]-X[i-1]) != np.sign(X[i-1]-X[i-2]) # Changing direction
+                    ]
+                if any(conditions):
+                    split_indices.append(i)
                     
-                split_indices = []
-                for i, x in enumerate(X):
-                    if i > start_enum_index and i < stop_enum_index:
-                        conditions = [
-                            np.sign(X[i]) != np.sign(X[i-1]), # Going through zero
-                            np.sign(X[i]-X[i-1]) != np.sign(X[i-1]-X[i-2]) # Changing direction
-                            ]
-                        if any(conditions):
-                            split_indices.append(i)
-                            
-                # print(split_indices)
-                if not len(split_indices) == 3:
-                    raise ValueError('Problem while quarter splitting. Not correct number of split indices')    
-            
-            self.data_split_quarter = [self.data.iloc[:split_indices[0]], 
-                                       self.data.iloc[split_indices[0]:split_indices[1]],
-                                       self.data.iloc[split_indices[1]-1:split_indices[2]],
-                                       self.data.iloc[split_indices[2]:]
-                                       ]
-            self.quarter_split_indices = split_indices
-            
-        elif self.looptype.split('_')[0] == 'half':
-            if find_quarter is False:
-                quarter_length = len(self.data[self.xlabel]) // 2
-                split_index = quarter_length
+        # print(split_indices)
+        # print(self.data[self.xlabel])
+        
+        # if not len(split_indices) == self.nb_quadrants - 1:
+        #     raise ValueError('Problem while quadrant splitting: Not correct number of split indices')    
+        
+        self.quarter_split_indices = split_indices
+        
+        # print(len(split_indices))
+        for i in range(len(split_indices)):
+            # print(i)
+            if i == 0:
+                data_split_quadrants = [self.data.iloc[:split_indices[0]]]
+            elif i == len(split_indices)-1:
+                data_split_quadrants.append(self.data.iloc[split_indices[-1]:])
             else:
-                X = self.data[self.xlabel].to_numpy()
-                start_enum_index, stop_enum_index = get_enum_indices(X, ignore_edge_data, n_ignore)
-                
-                for i, x in enumerate(X):
-                    if i > start_enum_index and i < stop_enum_index:
-                        if np.sign(X[i]-X[i-1]) != np.sign(X[i-1]-X[i-2]):
-                            break
-                split_index = i
+                data_split_quadrants.append(self.data.iloc[split_indices[i]:split_indices[i+1]])
+        
+        self.data_split_quadrants = data_split_quadrants
+        # self.data_split_quadrants = [self.data.iloc[:split_indices[0]], 
+        #                            self.data.iloc[split_indices[0]:split_indices[1]],
+        #                            self.data.iloc[split_indices[1]-1:split_indices[2]],
+        #                            self.data.iloc[split_indices[2]:]
+        #                            ]
             
-            self.data_split_quarter = [self.data.iloc[:split_index], self.data.iloc[split_index:]]
-            self.quarter_split_indix = split_index
+        # elif self.looptype.split('_')[0] == 'half':
+        #     if find_quarter is False:
+        #         quarter_length = len(self.data[self.xlabel]) // 2
+        #         split_index = quarter_length
+        #     else:
+        #         X = self.data[self.xlabel].to_numpy()
+        #         start_enum_index, stop_enum_index = get_enum_indices(X, ignore_edge_data, n_ignore)
+                
+        #         for i, x in enumerate(X):
+        #             if i > start_enum_index and i < stop_enum_index:
+        #                 if np.sign(X[i]-X[i-1]) != np.sign(X[i-1]-X[i-2]):
+        #                     break
+        #         split_index = i
+            
+        #     self.data_split_quadrants = [self.data.iloc[:split_index], self.data.iloc[split_index:]]
             
     
     def define_high_x_lim(self, limit, mode='rel'):
@@ -266,20 +345,21 @@ class GenHyst:
         if not hasattr(self, 'high_x_lim'):
             raise ValueError('high_x_lim not defined')
             
-        if not hasattr(self, 'data_split_quarter'):
-            self.split_quarter()
+        if not hasattr(self, 'data_split_quadrants'):
+            self.split_quadrants()
         
-        if self.looptype == 'full':
-            nb_q = 4
-        else:
-            nb_q = 2
+        # if self.looptype == 'full':
+        #     nb_q = 4
+        # else:
+        #     nb_q = 2
             
+        nb_q = self.nb_quadrants
         slopes_in_qs = []
         for q in quadrants:
             if q-1 > nb_q:
                 raise ValueError(f'Quadrant {q} > total number of quadrants of {nb_q}')
             
-            data = self.data_split_quarter[q]
+            data = self.data_split_quadrants[q]
             data_high_x = data[data[self.xlabel].abs() > self.high_x_lim]
             try:
                 slope, intercept, r, p, se  = linregress(data_high_x[self.xlabel], data_high_x[self.ylabel])
@@ -440,14 +520,16 @@ class GenHyst:
             
     def get_data_to_process(self):
         if not self.looptype == 'full':
-            print('WARNING: Only full loops have been tested.')
+            print('WARNING: Only looptypes "full" and "full_initial" have been tested.')
         
-        if not self.looptype == 'full':
-            self.data_to_process = [self.data]
-        else:
+        # if not self.looptype == 'full':
+        #     self.data_to_process = [self.data]
+        if self.looptype in ['full', 'full_initial']:
             if not hasattr(self, 'data_split_half'):
                 self.split_half(find_half=True)
             self.data_to_process = self.data_split_half
+            
+            
             
     def get_loop_interp(self, interp_density, check_if_exists=True):
         if check_if_exists is True:
@@ -568,7 +650,7 @@ class GenHyst:
             new_vals[key] = new_val
             
         new_hyst = GenHyst(new_vals['x'], new_vals['y'], new_vals['xerr'], new_vals['yerr'],
-                           new_vals['name'], new_vals['history'])
+                           new_vals['name'], history=new_vals['history'])
         
         for key in copy:
             if hasattr(self, key):
@@ -646,7 +728,6 @@ class LoopChar:
             
         self.points = []
         
-        
     def append_point(self, point):
         if isinstance(point, tuple):
             self.points.append(point)
@@ -697,7 +778,6 @@ class LoopChar:
                 axis = 1
             else:
                 raise
-        
         
         new_loopchar = c.deepcopy(self)
         

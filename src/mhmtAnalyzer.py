@@ -12,13 +12,13 @@ Analysis module for magnetometry data
 
 # ____________________________________________________________________________
 # Data
-selectUI = False        # Select input folder from UI
-IPFolder = r'D:\owncloud\0_Personal\DATA\NIZAF\NIZAF0004\220504' # Ignore if selectUI == True
+selectUI = True        # Select input folder from UI
+IPFolder = r'C:\Users\rimmler\Desktop\squid' # Ignore if selectUI == True
 
 
 # ____________________________________________________________________________
 # Sample
-SampleID = 'NIZAF0004'
+SampleID = 'MB0513'
 
 IPSampleParamDBFileFolder = r'D:\owncloud\0_Personal\ANALYSIS\Mn3SnN\SQUID'
 IPSampleParamDBFileFile = 'squid_samples_sampleparameters.csv'
@@ -44,10 +44,10 @@ MeasModeLS = 0          # 0 = at RT
 # ____________________________________________________________________________
 # Data processing
 AutoParamSearch = True  # automatic recognition of constant parameter
-moment_units = [0, 1, 2]      # 0 = raw, 1 = emu/cm3, 2 = muB/f.u.
+moment_units = [0, 1]      # 0 = raw, 1 = emu/cm3, 2 = muB/f.u.
 
-HFQuadrants = [0,1,2,3] # quadrants used for substrate subtraction
-HFLimit = 40000         # High-field limit for substrate subtraction
+HFQuadrants = [0,1,2] # quadrants used for substrate subtraction
+HFLimit = 55000         # High-field limit for substrate subtraction
 HFLimitMode = 'abs'     # Mode of high field limit: absolute ("abs") values or
                         # relative to maximum value ("rel")
 
@@ -62,7 +62,7 @@ plt_error_bar = True
 FigBaseSizeMH = (6,5)   # Better not to change
 FigBaseSizeMT = (5,3)   # Same
 
-MHInsetLimit = 2000     # Oe
+MHInsetLimit = 5000     # Oe
 FigBaseDPI = 300
 
 # ____________________________________________________________________________
